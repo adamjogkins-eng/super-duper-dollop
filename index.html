@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>XCode Mobile</title>
+    <title>XCode Mobile Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #020617; }
         body, html { background-color: var(--bg-color); font-family: -apple-system, sans-serif; overflow: hidden; height: 100%; width: 100%; margin: 0; color: white; touch-action: manipulation; }
         .screen { height: 100vh; width: 100vw; display: flex; flex-direction: column; background: radial-gradient(circle at 50% 0%, #1e1b4b, #020617); position: relative; }
         
-        .status-bar { padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); z-index: 50; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .status-bar { padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); z-index: 50; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; letter-spacing: 0.5px; }
         
         .home-container { flex: 1; position: relative; overflow: hidden; }
         #page-wrapper { display: flex; width: 100%; transition: transform 0.4s cubic-bezier(0.2, 0, 0.2, 1); height: 100%; }
@@ -24,20 +24,21 @@
         .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3); transition: all 0.3s; }
         .dot.active { background: white; transform: scale(1.3); }
 
-        .app-window { position: fixed; inset: 0; background: #020617; z-index: 1000; display: none; flex-direction: column; animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+        .app-window { position: fixed; inset: 0; background: #020617; z-index: 1000; display: none; flex-direction: column; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
         .window-header { padding: 12px 20px; display: flex; align-items: center; border-bottom: 1px solid #1e293b; background: #0f172a; min-height: 64px; }
         
-        #code-editor { flex: 1; background: #000; color: #4ade80; font-family: 'SF Mono', 'Courier New', monospace; padding: 15px; resize: none; border: none; outline: none; font-size: 12px; line-height: 1.4; }
+        #code-editor { flex: 1; background: #000; color: #10b981; font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace; padding: 15px; resize: none; border: none; outline: none; font-size: 11px; line-height: 1.5; white-space: pre; overflow: auto; -webkit-overflow-scrolling: touch; }
+        #code-editor:focus { border-left: 2px solid #3b82f6; background: #050505; }
         
-        #game-arena { width: 100%; height: 160px; background: #38bdf8; position: relative; display: none; overflow: hidden; }
+        #game-arena { width: 100%; height: 140px; background: #0ea5e9; position: relative; display: none; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.1); }
         #flappyCanvas { width: 100%; height: 100%; }
 
-        .ai-panel { background: #0f172a; padding: 16px; border-top: 1px solid #334155; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+        .ai-panel { background: #0f172a; padding: 12px 16px; border-top: 1px solid #334155; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
         
         #app-sandbox { flex: 1; border: none; background: white; }
-        .loader { width: 18px; height: 18px; border: 2px solid white; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: spin 0.8s linear infinite; }
+        .loader { width: 16px; height: 16px; border: 2px solid #3b82f6; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: spin 0.8s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
@@ -45,10 +46,10 @@
 
 <div class="screen">
     <div class="status-bar">
-        <span id="clock" class="font-bold">12:00</span>
+        <span id="clock">12:00</span>
         <div class="flex items-center gap-2">
-            <span class="text-blue-400 font-bold text-[10px] tracking-widest">XCODE MOBILE</span>
-            <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+            <span class="text-blue-400">XCODE MOBILE</span>
+            <div class="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]"></div>
         </div>
     </div>
 
@@ -57,72 +58,69 @@
         <div class="page-dots" id="page-dots"></div>
     </div>
 
-    <!-- Creator Window -->
     <div id="creator-window" class="app-window">
         <div class="window-header">
             <button onclick="closeWindow('creator-window')" class="text-slate-400 font-medium px-2">Cancel</button>
-            <span class="font-bold flex-1 text-center">Studio</span>
-            <button id="install-btn" onclick="installApp()" class="text-blue-400 font-bold px-2">Install</button>
+            <span class="font-bold flex-1 text-center text-sm">Studio Editor</span>
+            <button onclick="installApp()" class="text-blue-400 font-bold px-2">Install</button>
         </div>
         
         <div id="game-arena">
             <canvas id="flappyCanvas"></canvas>
             <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <span class="bg-black/40 px-3 py-1 rounded-full text-[10px] text-white uppercase font-bold">Compiling... Tap to play</span>
+                <span class="bg-black/60 px-4 py-1.5 rounded-full text-[10px] text-white uppercase font-black tracking-widest border border-white/20">Flash 2.5 Logic Streaming...</span>
             </div>
         </div>
 
         <div class="px-4 py-3 bg-slate-900 border-b border-slate-800 flex gap-2">
-            <input id="app-name-input" type="text" placeholder="Project Name" class="flex-1 bg-black border border-slate-700 p-2 rounded-lg text-white text-sm outline-none">
-            <input id="app-icon-input" type="text" placeholder="Icon" class="w-12 bg-black border border-slate-700 p-2 rounded-lg text-center text-sm outline-none">
+            <input id="app-name-input" type="text" placeholder="App Title" class="flex-1 bg-black border border-slate-700 p-2 rounded-lg text-white text-xs outline-none">
+            <input id="app-icon-input" type="text" placeholder="Icon" class="w-12 bg-black border border-slate-700 p-2 rounded-lg text-center text-xs outline-none">
         </div>
         
-        <textarea id="code-editor" spellcheck="false" readonly placeholder="Output stream..."></textarea>
+        <textarea id="code-editor" spellcheck="false" placeholder="Enter code or use the builder below..."></textarea>
         
         <div class="ai-panel">
             <div class="flex gap-2">
-                <input id="ai-prompt" type="text" placeholder="Prompt (e.g. 'Snake game')" class="flex-1 bg-black border border-slate-700 p-3 rounded-xl text-white outline-none focus:border-blue-500 transition-colors">
+                <input id="ai-prompt" type="text" placeholder="What should we build today?" class="flex-1 bg-black border border-slate-700 p-3 rounded-xl text-white text-sm outline-none focus:border-blue-500 transition-colors">
                 <button id="ai-btn" onclick="askFlash()" class="bg-blue-600 px-5 py-3 rounded-xl font-bold flex items-center gap-2 active:scale-90 transition-transform">
-                    <span id="ai-btn-text">Build</span>
+                    <span id="ai-btn-text">Generate</span>
                     <span id="ai-loader" class="loader hidden"></span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Runner Window -->
     <div id="runner-window" class="app-window">
         <div class="window-header">
             <button onclick="closeWindow('runner-window')" class="text-blue-400 font-bold px-2">Back</button>
-            <span id="runner-title" class="flex-1 text-center font-bold text-sm">Preview</span>
-            <button onclick="deleteCurrentApp()" class="text-red-500 font-medium px-2">Delete</button>
+            <span id="runner-title" class="flex-1 text-center font-bold text-xs uppercase tracking-widest">Environment</span>
+            <button onclick="deleteCurrentApp()" class="text-red-500 font-medium px-2">Trash</button>
         </div>
         <iframe id="app-sandbox"></iframe>
     </div>
 
-    <!-- Settings Window -->
     <div id="settings-window" class="app-window">
         <div class="window-header">
             <button onclick="closeWindow('settings-window')" class="text-slate-400 px-2">Close</button>
-            <span class="font-bold flex-1 text-center">Settings</span>
+            <span class="font-bold flex-1 text-center">X-Config</span>
             <button onclick="generateBackup()" class="text-blue-400 font-bold px-2">Backup</button>
         </div>
         <div class="p-6 space-y-4">
             <div>
-                <label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">API Key Engine</label>
+                <label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Gemini API Key</label>
                 <input id="user-api-key" type="password" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-sm" onchange="saveApiKey(this.value)">
             </div>
-            <textarea id="sync-editor" class="w-full h-48 bg-black border border-slate-800 rounded-xl p-3 text-[10px] text-emerald-500 font-mono" placeholder="Backup data will appear here..."></textarea>
+            <textarea id="sync-editor" class="w-full h-48 bg-black border border-slate-800 rounded-xl p-3 text-[10px] text-blue-400 font-mono" placeholder="Backup data..."></textarea>
             <div class="flex gap-2">
-                <button onclick="copyBackup()" class="flex-1 bg-slate-800 py-3 rounded-xl font-bold text-xs">Copy Code</button>
-                <button onclick="importApps()" class="flex-1 bg-emerald-600 py-3 rounded-xl font-bold text-xs">Import Backup</button>
+                <button onclick="copyBackup()" class="flex-1 bg-slate-800 py-3 rounded-xl font-bold text-xs uppercase">Copy Data</button>
+                <button onclick="importApps()" class="flex-1 bg-blue-600 py-3 rounded-xl font-bold text-xs uppercase">Import</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    let apiKey = "AIzaSyCBKps__KgVfAbBBwBqGPjUYuc9U_yfets"; 
+    let apiKey = ""; 
 
     const savedKey = localStorage.getItem('xcode_api_key');
     if (savedKey) { apiKey = savedKey; }
@@ -156,18 +154,18 @@
     function gameLoop() {
         if (!gameActive) return;
         frame++;
-        ctx.fillStyle = '#38bdf8';
+        ctx.fillStyle = '#0ea5e9';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         bird.v += bird.g; bird.y += bird.v;
-        ctx.fillStyle = '#fbbf24';
+        ctx.fillStyle = 'white';
         ctx.fillRect(bird.x, bird.y, bird.w, bird.h);
         if (frame % 100 === 0) {
             const h = Math.random() * (canvas.height - 120) + 20;
             pipes.push({ x: canvas.width, t: h, b: canvas.height - h - 80, w: 40 });
         }
         pipes.forEach((p, i) => {
-            p.x -= 2;
-            ctx.fillStyle = '#10b981';
+            p.x -= 2.5;
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
             ctx.fillRect(p.x, 0, p.w, p.t);
             ctx.fillRect(p.x, canvas.height - p.b, p.w, p.b);
             if (bird.x + bird.w > p.x && bird.x < p.x + p.w && (bird.y < p.t || bird.y + bird.h > canvas.height - p.b)) gameActive = false;
@@ -183,8 +181,8 @@
     });
 
     async function askFlash() {
-        const prompt = document.getElementById('ai-prompt').value.trim();
-        if (!prompt) return;
+        const promptText = document.getElementById('ai-prompt').value.trim();
+        if (!promptText) return;
 
         document.getElementById('game-arena').style.display = 'block';
         initFlappy(); gameLoop();
@@ -195,15 +193,16 @@
 
         btn.disabled = true;
         loader.classList.remove('hidden');
-        editor.value = "// Initializing Neural Engine...\n// Generating layout...";
+        editor.value = "// Connecting to Gemini 2.5 Flash Engine...\n// Drafting codebase...";
 
         try {
+            // Reverted back to gemini-2.5-flash-preview-09-2025
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Create a single-file HTML/Tailwind/JS mobile app: ${prompt}. UI MUST fit 100vh with NO scrolling. Large touch controls. Pure HTML only.` }] }],
-                    systemInstruction: { parts: [{ text: "Senior Mobile Dev. Return ONLY pure HTML/JS code. No markdown code blocks." }] }
+                    contents: [{ parts: [{ text: `Task: Create a single-file mobile web app: ${promptText}. Requirements: Tailwind CSS, Vanilla JS, Dark Mode UI, No Scrolling. Return PURE HTML only.` }] }],
+                    systemInstruction: { parts: [{ text: "You are a professional mobile developer. Return ONLY the HTML code. Do not use markdown backticks." }] }
                 })
             });
             const data = await res.json();
@@ -214,7 +213,7 @@
             document.getElementById('game-arena').style.display = 'none';
             gameActive = false;
         } catch (e) {
-            editor.value = "// Error: Engine failure. Check API key.";
+            editor.value = "// Error: Engine timeout or API Key invalid.";
         } finally {
             btn.disabled = false;
             loader.classList.add('hidden');
@@ -227,8 +226,8 @@
         wrapper.innerHTML = ''; dots.innerHTML = '';
 
         const sys = [
-            { n: 'Studio', i: '🛠️', c: 'from-blue-600 to-indigo-800', f: () => openWindow('creator-window') },
-            { n: 'Settings', i: '⚙️', c: 'from-slate-700 to-slate-900', f: () => openWindow('settings-window') }
+            { n: 'Studio', i: '🏗️', c: 'from-blue-600 to-blue-800', f: () => openWindow('creator-window') },
+            { n: 'Config', i: '🔩', c: 'from-slate-700 to-slate-900', f: () => openWindow('settings-window') }
         ];
 
         const all = [...sys, ...installedApps.map((a, idx) => ({ n: a.name, i: a.icon, c: 'bg-slate-800', f: () => launch(idx) }))];
@@ -242,7 +241,7 @@
                 item.className = 'app-icon';
                 item.onclick = app.f;
                 const color = app.c.startsWith('bg-') ? app.c : `bg-gradient-to-b ${app.c}`;
-                item.innerHTML = `<div class="icon-shape ${color}">${app.i}</div><span class="text-[10px] font-bold">${app.n}</span>`;
+                item.innerHTML = `<div class="icon-shape ${color}">${app.i}</div><span class="text-[10px] font-bold uppercase tracking-tighter opacity-80">${app.n}</span>`;
                 page.appendChild(item);
             });
             wrapper.appendChild(page);
@@ -258,12 +257,13 @@
 
     function installApp() {
         const name = document.getElementById('app-name-input').value || "Project X";
-        const icon = document.getElementById('app-icon-input').value || "📱";
+        const icon = document.getElementById('app-icon-input').value || "💠";
         const code = document.getElementById('code-editor').value;
-        if (code.length < 50) return;
+        if (code.length < 20) return;
         installedApps.push({ name, icon, code });
         localStorage.setItem('xcode_apps', JSON.stringify(installedApps));
         renderGrid(); closeWindow('creator-window');
+        document.getElementById('code-editor').value = "";
     }
 
     function launch(idx) {
@@ -280,10 +280,8 @@
         renderGrid(); closeWindow('runner-window');
     }
 
-    // FIX: UTF-8 Safe Backup
     function generateBackup() {
         const str = JSON.stringify(installedApps);
-        // Uses encodeURIComponent to handle emojis/special chars before b64
         const base64 = btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
             return String.fromCharCode('0x' + p1);
         }));
@@ -296,7 +294,6 @@
         document.execCommand('copy');
     }
 
-    // FIX: UTF-8 Safe Import
     function importApps() {
         try {
             const base64 = document.getElementById('sync-editor').value.trim();
@@ -308,11 +305,8 @@
                 installedApps = apps;
                 localStorage.setItem('xcode_apps', JSON.stringify(installedApps));
                 renderGrid();
-                alert("Import successful!");
             }
-        } catch(e) { 
-            alert("Import failed. Ensure the code is a valid XCode Mobile backup."); 
-        }
+        } catch(e) { alert("Invalid Backup Data"); }
     }
 
     let startX = 0;
