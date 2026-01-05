@@ -58,6 +58,7 @@
         <div class="page-dots" id="page-dots"></div>
     </div>
 
+    <!-- Studio (Editor Window) -->
     <div id="creator-window" class="app-window">
         <div class="window-header">
             <button onclick="closeWindow('creator-window')" class="text-slate-400 font-medium px-2">Cancel</button>
@@ -90,6 +91,7 @@
         </div>
     </div>
 
+    <!-- Runner Window -->
     <div id="runner-window" class="app-window">
         <div class="window-header">
             <button onclick="closeWindow('runner-window')" class="text-blue-400 font-bold px-2">Back</button>
@@ -99,6 +101,7 @@
         <iframe id="app-sandbox"></iframe>
     </div>
 
+    <!-- Settings Window -->
     <div id="settings-window" class="app-window">
         <div class="window-header">
             <button onclick="closeWindow('settings-window')" class="text-slate-400 px-2">Close</button>
@@ -120,7 +123,8 @@
 </div>
 
 <script>
-    let apiKey = ""; 
+    // RESTORED: Hardcoded key as requested
+    let apiKey = "AIzaSyCBKps__KgVfAbBBwBqGPjUYuc9U_yfets"; 
 
     const savedKey = localStorage.getItem('xcode_api_key');
     if (savedKey) { apiKey = savedKey; }
@@ -193,10 +197,9 @@
 
         btn.disabled = true;
         loader.classList.remove('hidden');
-        editor.value = "// Connecting to Gemini 2.5 Flash Engine...\n// Drafting codebase...";
+        editor.value = "// Connecting to Gemini 2.5 Flash Neural Engine...\n// Drafting codebase...";
 
         try {
-            // Reverted back to gemini-2.5-flash-preview-09-2025
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -227,7 +230,7 @@
 
         const sys = [
             { n: 'Studio', i: '🏗️', c: 'from-blue-600 to-blue-800', f: () => openWindow('creator-window') },
-            { n: 'Config', i: '🔩', c: 'from-slate-700 to-slate-900', f: () => openWindow('settings-window') }
+            { n: 'Config', i: '⚙️', c: 'from-slate-700 to-slate-900', f: () => openWindow('settings-window') }
         ];
 
         const all = [...sys, ...installedApps.map((a, idx) => ({ n: a.name, i: a.icon, c: 'bg-slate-800', f: () => launch(idx) }))];
