@@ -3,17 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>XCode Mobile</title>
+    <title>Turbo OS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #020617; }
         body, html { background-color: var(--bg-color); font-family: -apple-system, sans-serif; overflow: hidden; height: 100%; width: 100%; margin: 0; color: white; touch-action: manipulation; }
         .screen { height: 100vh; width: 100vw; display: flex; flex-direction: column; background: radial-gradient(circle at 50% 0%, #1e1b4b, #020617); position: relative; }
         
-        /* Premium Status Bar */
         .status-bar { padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; background: rgba(0,0,0,0.6); backdrop-filter: blur(15px); z-index: 50; border-bottom: 1px solid rgba(255,255,255,0.1); }
         
-        /* Grid Layout */
         .home-container { flex: 1; position: relative; overflow: hidden; display: flex; align-items: stretch; }
         #page-wrapper { display: flex; width: 100%; transition: transform 0.4s cubic-bezier(0.2, 0, 0.2, 1); height: 100%; }
         .home-page { min-width: 100%; height: 100%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(4, 110px); gap: 10px; padding: 20px; box-sizing: border-box; }
@@ -33,7 +31,6 @@
         
         #code-editor, #sync-editor { flex: 1; background: #000; color: #4ade80; font-family: 'Courier New', monospace; padding: 15px; resize: none; border: none; outline: none; font-size: 13px; line-height: 1.5; }
         
-        /* Game Arena for Loading */
         #game-arena { width: 100%; height: 180px; background: #38bdf8; position: relative; display: none; border-bottom: 2px solid #0f172a; overflow: hidden; }
         #flappyCanvas { width: 100%; height: 100%; touch-action: none; }
 
@@ -50,7 +47,7 @@
     <div class="status-bar">
         <span id="clock">12:00</span>
         <div class="flex gap-3">
-            <span class="text-blue-400 font-bold text-[10px] tracking-widest uppercase">XCode Mobile 1.0</span>
+            <span class="text-blue-400 font-bold text-[10px] tracking-widest uppercase">Turbo OS 2.5</span>
         </div>
     </div>
 
@@ -59,18 +56,18 @@
         <div class="page-dots" id="page-dots"></div>
     </div>
 
-    <!-- Architect Studio (App Builder) -->
+    <!-- Architect Studio -->
     <div id="creator-window" class="app-window">
         <div class="window-header">
             <button onclick="closeWindow('creator-window')" class="text-slate-400 font-medium">Cancel</button>
-            <span class="font-bold flex-1 text-center">Studio</span>
+            <span class="font-bold flex-1 text-center">Architect Studio</span>
             <button onclick="installApp()" class="text-blue-400 font-bold px-2">Install</button>
         </div>
         
         <div id="game-arena">
             <canvas id="flappyCanvas"></canvas>
             <div class="absolute bottom-2 left-0 w-full text-center pointer-events-none">
-                <span class="bg-black/50 px-3 py-1 rounded-full text-[8px] text-white uppercase tracking-widest">Wait for code - Tap to Play</span>
+                <span class="bg-black/50 px-3 py-1 rounded-full text-[8px] text-white uppercase tracking-widest">Tap to Play</span>
             </div>
         </div>
 
@@ -79,38 +76,38 @@
             <input id="app-icon-input" type="text" placeholder="Icon" class="w-14 bg-black border border-slate-700 p-2.5 rounded-lg text-white text-center outline-none text-sm">
         </div>
         
-        <textarea id="code-editor" spellcheck="false" placeholder="Your production code will stream here..."></textarea>
+        <textarea id="code-editor" spellcheck="false" placeholder="Your app code will stream here..."></textarea>
         
         <div class="ai-panel">
             <div class="flex gap-3">
-                <input id="ai-prompt" type="text" placeholder="Design a professional app..." class="flex-1 bg-black border border-slate-700 p-3 rounded-xl text-white outline-none">
+                <input id="ai-prompt" type="text" placeholder="Describe your web app..." class="flex-1 bg-black border border-slate-700 p-3 rounded-xl text-white outline-none">
                 <button id="ai-btn" onclick="askFlash()" class="bg-blue-600 px-6 py-3 rounded-xl font-bold flex items-center gap-2 active:scale-95 transition-transform">
-                    <span id="ai-btn-text">Compile</span>
+                    <span id="ai-btn-text">Build</span>
                     <span id="ai-loader" class="loader hidden"></span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Settings & Sync -->
+    <!-- Sync Center -->
     <div id="sync-window" class="app-window">
         <div class="window-header">
             <button onclick="closeWindow('sync-window')" class="text-slate-400 font-medium">Close</button>
-            <span class="font-bold flex-1 text-center">X-Settings</span>
+            <span class="font-bold flex-1 text-center">Sync Center</span>
             <button onclick="importApps()" class="text-emerald-400 font-bold px-2">Import</button>
         </div>
         
         <div class="p-4 bg-slate-900 border-b border-slate-800">
-            <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">API Engine</label>
-            <input id="user-api-key" type="password" placeholder="Key active..." class="w-full bg-black border border-slate-700 p-2 rounded text-xs text-white outline-none" onchange="saveApiKey(this.value)">
+            <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">Active API Key</label>
+            <input id="user-api-key" type="password" placeholder="Key Active..." class="w-full bg-black border border-slate-700 p-2 rounded text-xs text-white outline-none" onchange="saveApiKey(this.value)">
         </div>
 
-        <div class="p-4 bg-slate-900 text-[10px] text-slate-400 uppercase font-bold tracking-wider">Cloud Data Transfer</div>
-        <textarea id="sync-editor" spellcheck="false" placeholder="Base64 transfer data..."></textarea>
+        <div class="p-4 bg-slate-900 text-[10px] text-slate-400 uppercase font-bold tracking-wider">Backup & Transfer</div>
+        <textarea id="sync-editor" spellcheck="false" placeholder="Base64 data goes here..."></textarea>
         
         <div class="p-4 bg-slate-900 flex gap-2">
-            <button onclick="generateBackup()" class="flex-1 bg-emerald-600 p-3 rounded-xl font-bold text-sm active:scale-95 transition-transform">Export State</button>
-            <button onclick="copyToClipboard()" class="flex-1 bg-slate-800 p-3 rounded-xl font-bold text-sm active:scale-95 transition-transform">Copy</button>
+            <button onclick="generateBackup()" class="flex-1 bg-emerald-600 p-3 rounded-xl font-bold text-sm active:scale-95 transition-transform">Export All</button>
+            <button onclick="copyToClipboard()" class="flex-1 bg-slate-800 p-3 rounded-xl font-bold text-sm active:scale-95 transition-transform">Copy Text</button>
         </div>
     </div>
 
@@ -118,15 +115,14 @@
     <div id="runner-window" class="app-window">
         <div class="window-header">
             <button onclick="closeWindow('runner-window')" class="text-blue-400 font-semibold">Back</button>
-            <span id="runner-title" class="flex-1 text-center font-bold">Preview</span>
-            <button onclick="deleteCurrentApp()" class="text-red-500 font-semibold px-2">Erase</button>
+            <span id="runner-title" class="flex-1 text-center font-bold">App Preview</span>
+            <button onclick="deleteCurrentApp()" class="text-red-500 font-semibold px-2">Delete</button>
         </div>
         <iframe id="app-sandbox"></iframe>
     </div>
 </div>
 
 <script>
-    // XCode Mobile Integrated API Key
     let apiKey = "AIzaSyCBKps__KgVfAbBBwBqGPjUYuc9U_yfets"; 
     
     const savedKey = localStorage.getItem('turbo_os_api_key');
@@ -152,7 +148,6 @@
     }
     setInterval(updateClock, 1000); updateClock();
 
-    // Mini-Game Logic
     const canvas = document.getElementById('flappyCanvas');
     const ctx = canvas.getContext('2d');
     let bird, pipes, score, gameActive = false, frame;
@@ -207,7 +202,7 @@
         document.getElementById('game-arena').style.display = 'block';
         initFlappy(); gameLoop();
 
-        editor.value = "/* XCode Mobile: Preparing production-ready layout... */";
+        editor.value = "// Architect is planning layout...";
         btnTxt.classList.add('hidden');
         loader.classList.remove('hidden');
 
@@ -216,22 +211,22 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Generate a single-file mobile web app: ${promptText}. Layout must fit in 100vh with no scroll. Use Tailwind. Return only code.` }] }],
-                    systemInstruction: { parts: [{ text: "Production web developer. One-screen mobile layouts only. Return PURE HTML. Never use markdown code blocks like ```html." }] }
+                    contents: [{ parts: [{ text: `Generate a single-file, mobile-responsive HTML/Tailwind CSS web application for: ${promptText}. CRITICAL: Ensure the entire UI, game board, and all touch controls are visible on one screen without scrolling. Return only code.` }] }],
+                    systemInstruction: { parts: [{ text: "Master of single-screen mobile layouts. No scrolling. Return pure HTML code only. Never include markdown wrappers like ```html or ```." }] }
                 })
             });
             const result = await response.json();
             let code = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
             
-            // Security: Strip potential markdown markers
+            // Fix: Strip markdown markers if the AI includes them despite instructions
             code = code.replace(/```html/gi, "").replace(/```/g, "").trim();
 
             editor.value = "";
             let i = 0;
             const timer = setInterval(() => {
-                const chunk = code.slice(i, i + 480);
+                const chunk = code.slice(i, i + 450);
                 editor.value += chunk;
-                i += 480;
+                i += 450;
                 editor.scrollTop = editor.scrollHeight;
                 if (i >= code.length) {
                     clearInterval(timer);
@@ -239,9 +234,9 @@
                     loader.classList.add('hidden');
                     setTimeout(() => document.getElementById('game-arena').style.display = 'none', 1000);
                 }
-            }, 2);
+            }, 3);
         } catch (e) {
-            editor.value = "// Compilation Error. Verify network or API key.";
+            editor.value = "Error: Invalid API Key or network failure.";
             btnTxt.classList.remove('hidden');
             loader.classList.add('hidden');
         }
@@ -258,8 +253,8 @@
         dotContainer.innerHTML = '';
         
         const systemApps = [
-            { name: "Studio", icon: "🛠️", action: () => openWindow('creator-window'), color: 'from-blue-600 to-indigo-800' },
-            { name: "Settings", icon: "⚙️", action: () => openWindow('sync-window'), color: 'from-slate-600 to-slate-800' }
+            { name: "Architect", icon: "🚀", action: () => openWindow('creator-window'), color: 'from-blue-600 to-indigo-800' },
+            { name: "Sync Center", icon: "🔄", action: () => openWindow('sync-window'), color: 'from-emerald-600 to-teal-800' }
         ];
         
         const allApps = [...systemApps, ...installedApps.map((a, i) => ({ ...a, action: () => launch(i), color: 'bg-slate-800' }))];
@@ -320,12 +315,12 @@
             const data = document.getElementById('sync-editor').value.trim();
             const apps = JSON.parse(decodeURIComponent(escape(atob(data))));
             if (Array.isArray(apps)) { installedApps = apps; saveApps(); renderGrid(); closeWindow('sync-window'); }
-        } catch(e) { alert("Import failed."); }
+        } catch(e) { alert("Invalid data format."); }
     }
 
     function installApp() {
-        const name = document.getElementById('app-name-input').value || "Project X";
-        const icon = document.getElementById('app-icon-input').value || "📦";
+        const name = document.getElementById('app-name-input').value || "New App";
+        const icon = document.getElementById('app-icon-input').value || "✨";
         const code = document.getElementById('code-editor').value;
         if (code.length < 50) return;
         installedApps.push({ name, icon, code });
