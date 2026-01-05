@@ -34,7 +34,6 @@
         #game-arena { width: 100%; height: 160px; background: #38bdf8; position: relative; display: none; overflow: hidden; }
         #flappyCanvas { width: 100%; height: 100%; }
 
-        /* The Prompter Bar - Fixed to bottom of Creator Window */
         .ai-panel { background: #0f172a; padding: 16px; border-top: 1px solid #334155; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
         
         #app-sandbox { flex: 1; border: none; background: white; }
@@ -58,12 +57,12 @@
         <div class="page-dots" id="page-dots"></div>
     </div>
 
-    <!-- Creator Window (This is the one you said was missing) -->
+    <!-- Creator Window -->
     <div id="creator-window" class="app-window">
         <div class="window-header">
             <button onclick="closeWindow('creator-window')" class="text-slate-400 font-medium px-2">Cancel</button>
             <span class="font-bold flex-1 text-center">Studio</span>
-            <button onclick="installApp()" class="text-blue-400 font-bold px-2">Install</button>
+            <button id="install-btn" onclick="installApp()" class="text-blue-400 font-bold px-2">Install</button>
         </div>
         
         <div id="game-arena">
@@ -113,17 +112,16 @@
                 <label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">API Key Engine</label>
                 <input id="user-api-key" type="password" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-sm" onchange="saveApiKey(this.value)">
             </div>
-            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                <p class="text-xs text-slate-400 leading-relaxed">XCode Mobile stores your apps in local storage. Use "Backup" to generate a code string you can save elsewhere.</p>
+            <textarea id="sync-editor" class="w-full h-48 bg-black border border-slate-800 rounded-xl p-3 text-[10px] text-emerald-500 font-mono" placeholder="Backup data will appear here..."></textarea>
+            <div class="flex gap-2">
+                <button onclick="copyBackup()" class="flex-1 bg-slate-800 py-3 rounded-xl font-bold text-xs">Copy Code</button>
+                <button onclick="importApps()" class="flex-1 bg-emerald-600 py-3 rounded-xl font-bold text-xs">Import Backup</button>
             </div>
-            <textarea id="sync-editor" class="w-full h-32 bg-black border border-slate-800 rounded-xl p-3 text-[10px] text-emerald-500 font-mono" placeholder="Backup data will appear here..."></textarea>
-            <button onclick="importApps()" class="w-full bg-emerald-600 py-3 rounded-xl font-bold">Import Backup</button>
         </div>
     </div>
 </div>
 
 <script>
-    // YOUR KEY IS HARDCODED HERE
     let apiKey = "AIzaSyCBKps__KgVfAbBBwBqGPjUYuc9U_yfets"; 
 
     const savedKey = localStorage.getItem('xcode_api_key');
@@ -144,7 +142,6 @@
     }
     setInterval(updateClock, 1000); updateClock();
 
-    // Loading Game
     const canvas = document.getElementById('flappyCanvas');
     const ctx = canvas.getContext('2d');
     let bird, pipes, score, gameActive = false, frame;
@@ -283,20 +280,41 @@
         renderGrid(); closeWindow('runner-window');
     }
 
+    // FIX: UTF-8 Safe Backup
     function generateBackup() {
-        document.getElementById('sync-editor').value = btoa(JSON.stringify(installedApps));
+        const str = JSON.stringify(installedApps);
+        // Uses encodeURIComponent to handle emojis/special chars before b64
+        const base64 = btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+            return String.fromCharCode('0x' + p1);
+        }));
+        document.getElementById('sync-editor').value = base64;
     }
 
+    function copyBackup() {
+        const el = document.getElementById('sync-editor');
+        el.select();
+        document.execCommand('copy');
+    }
+
+    // FIX: UTF-8 Safe Import
     function importApps() {
         try {
-            const apps = JSON.parse(atob(document.getElementById('sync-editor').value));
-            installedApps = apps;
-            localStorage.setItem('xcode_apps', JSON.stringify(installedApps));
-            renderGrid();
-        } catch(e) { alert("Invalid data"); }
+            const base64 = document.getElementById('sync-editor').value.trim();
+            const str = decodeURIComponent(Array.prototype.map.call(atob(base64), function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            const apps = JSON.parse(str);
+            if (Array.isArray(apps)) {
+                installedApps = apps;
+                localStorage.setItem('xcode_apps', JSON.stringify(installedApps));
+                renderGrid();
+                alert("Import successful!");
+            }
+        } catch(e) { 
+            alert("Import failed. Ensure the code is a valid XCode Mobile backup."); 
+        }
     }
 
-    // Touch Swipe
     let startX = 0;
     document.getElementById('home-container').addEventListener('touchstart', e => startX = e.touches[0].clientX);
     document.getElementById('home-container').addEventListener('touchend', e => {
