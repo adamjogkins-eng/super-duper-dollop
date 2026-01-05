@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Turbo OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --bg-color: #020617; }
+        body, html { background-color: var(--bg-color); font-family: -apple-system, sans-serif; overflow: hidden; height: 100%; width: 100%; margin: 0; color: white; touch-action: manipulation; }
+        .screen { height: 100vh; width: 100vw; display: flex; flex-direction: column; background: radial-gradient(circle at 50% 0%, #1e1b4b, #020617); position: relative; }
+        
+        .status-bar { padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; background: rgba(0,0,0,0.6); backdrop-filter: blur(15px); z-index: 50; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        
+        .home-container { flex: 1; position: relative; overflow: hidden; display: flex; align-items: stretch; }
+        #page-wrapper { display: flex; width: 100%; transition: transform 0.4s cubic-bezier(0.2, 0, 0.2, 1); height: 100%; }
+        .home-page { min-width: 100%; height: 100%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(4, 110px); gap: 10px; padding: 20px; box-sizing: border-box; }
+        
+        .app-icon { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s; height: 100px; justify-content: center; }
+        .app-icon:active { transform: scale(0.9); }
+        .icon-shape { width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255,255,255,0.1); }
+        
+        .page-dots { position: absolute; bottom: 20px; left: 0; width: 100%; display: flex; justify-content: center; gap: 8px; pointer-events: none; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3); transition: background 0.3s; }
+        .dot.active { background: white; width: 8px; height: 8px; }
+
+        .app-window { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #020617; z-index: 100; display: none; flex-direction: column; animation: openWindow 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes openWindow { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .window-header { padding: 12px 20px; display: flex; align-items: center; border-bottom: 1px solid #1e293b; background: #0f172a; height: 60px; }
+        
+        #code-editor, #sync-editor { flex: 1; background: #000; color: #4ade80; font-family: 'Courier New', monospace; padding: 15px; resize: none; border: none; outline: none; font-size: 13px; line-height: 1.5; }
+        
+        #game-arena { width: 100%; height: 180px; background: #38bdf8; position: relative; display: none; border-bottom: 2px solid #0f172a; overflow: hidden; }
+        #flappyCanvas { width: 100%; height: 100%; touch-action: none; }
+
+        .ai-panel { background: #0f172a; padding: 15px; border-top: 1px solid #1e293b; display: flex; flex-direction: column; gap: 12px; }
+        .loader { width: 16px; height: 16px; border: 2px solid #3b82f6; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        #app-sandbox { flex: 1; border: none; background: white; }
+    </style>
+</head>
+<body>
+
+<div class="screen">
+    <div class="status-bar">
+        <span id="clock">12:00</span>
+        <div class="flex gap-3">
+            <span class="text-blue-400 font-bold text-[10px] tracking-widest uppercase">Turbo OS 2.5</span>
+        </div>
+    </div>
+
+    <div class="home-container" id="home-container">
+        <div id="page-wrapper"></div>
+        <div class="page-dots" id="page-dots"></div>
+    </div>
+
+    <!-- Architect Studio -->
+    <div id="creator-window" class="app-window">
+        <div class="window-header">
+            <button onclick="closeWindow('creator-window')" class="text-slate-400 font-medium">Cancel</button>
+            <span class="font-bold flex-1 text-center">Architect Studio</span>
+            <button onclick="installApp()" class="text-blue-400 font-bold px-2">Install</button>
+        </div>
+        
+        <div id="game-arena">
+            <canvas id="flappyCanvas"></canvas>
+            <div class="absolute bottom-2 left-0 w-full text-center pointer-events-none">
+                <span class="bg-black/50 px-3 py-1 rounded-full text-[8px] text-white uppercase tracking-widest">Tap to Play</span>
+            </div>
+        </div>
+
+        <div class="p-4 bg-slate-900 flex gap-2">
+            <input id="app-name-input" type="text" placeholder="App Name" class="flex-1 bg-black border border-slate-700 p-2.5 rounded-lg text-white outline-none text-sm">
+            <input id="app-icon-input" type="text" placeholder="Icon" class="w-14 bg-black border border-slate-700 p-2.5 rounded-lg text-white text-center outline-none text-sm">
+        </div>
+        
+        <textarea id="code-editor" spellcheck="false" placeholder="Your app code will stream here..."></textarea>
+        
+        <div class="ai-panel">
+            <div class="flex gap-3">
+                <input id="ai-prompt" type="text" placeholder="Describe your web app..." class="flex-1 bg-black border border-slate-700 p-3 rounded-xl text-white outline-none">
+                <button id="ai-btn" onclick="askFlash()" class="bg-blue-600 px-6 py-3 rounded-xl font-bold flex items-center gap-2 active:scale-95 transition-transform">
+                    <span id="ai-btn-text">Build</span>
+                    <span id="ai-loader" class="loader hidden"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sync Center -->
+    <div id="sync-window" class="app-window">
+        <div class="window-header">
+            <button onclick="closeWindow('sync-window')" class="text-slate-400 font-medium">Close</button>
+            <span class="font-bold flex-1 text-center">Sync Center</span>
+            <button onclick="importApps()" class="text-emerald-400 font-bold px-2">Import</button>
+        </div>
+        
+        <div class="p-4 bg-slate-900 border-b border-slate-800">
+            <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">Active API Key</label>
+            <input id="user-api-key" type="password" placeholder="Key Active..." class="w-full bg-black border border-slate-700 p-2 rounded text-xs text-white outline-none" onchange="saveApiKey(this.value)">
+        </div>
+
+        <div class="p-4 bg-slate-900 text-[10px] text-slate-400 uppercase font-bold tracking-wider">Backup & Transfer</div>
+        <textarea id="sync-editor" spellcheck="false" placeholder="Base64 data goes here..."></textarea>
+        
+        <div class="p-4 bg-slate-900 flex gap-2">
+            <button onclick="generateBackup()" class="flex-1 bg-emerald-600 p-3 rounded-xl font-bold text-sm active:scale-95 transition-transform">Export All</button>
+            <button onclick="copyToClipboard()" class="flex-1 bg-slate-800 p-3 rounded-xl font-bold text-sm active:scale-95 transition-transform">Copy Text</button>
+        </div>
+    </div>
+
+    <!-- Runner -->
+    <div id="runner-window" class="app-window">
+        <div class="window-header">
+            <button onclick="closeWindow('runner-window')" class="text-blue-400 font-semibold">Back</button>
+            <span id="runner-title" class="flex-1 text-center font-bold">App Preview</span>
+            <button onclick="deleteCurrentApp()" class="text-red-500 font-semibold px-2">Delete</button>
+        </div>
+        <iframe id="app-sandbox"></iframe>
+    </div>
+</div>
+
+<script>
+    let apiKey = "AIzaSyCBKps__KgVfAbBBwBqGPjUYuc9U_yfets"; 
+    
+    const savedKey = localStorage.getItem('turbo_os_api_key');
+    if (savedKey) {
+        apiKey = savedKey;
+        document.getElementById('user-api-key').value = savedKey;
+    } else {
+        document.getElementById('user-api-key').value = apiKey;
+    }
+
+    function saveApiKey(val) {
+        apiKey = val;
+        localStorage.setItem('turbo_os_api_key', val);
+    }
+
+    let currentAppIndex = null;
+    let currentPage = 0;
+    let startX = 0;
+
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clock').innerText = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    }
+    setInterval(updateClock, 1000); updateClock();
+
+    const canvas = document.getElementById('flappyCanvas');
+    const ctx = canvas.getContext('2d');
+    let bird, pipes, score, gameActive = false, frame;
+
+    function initFlappy() {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        bird = { x: 60, y: canvas.height / 2, w: 20, h: 16, v: 0, g: 0.25, j: -4.5 };
+        pipes = []; score = 0; gameActive = true; frame = 0;
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+        frame++;
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        bird.v += bird.g; bird.y += bird.v;
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(bird.x, bird.y, bird.w, bird.h);
+        if (frame % 90 === 0) {
+            const h = Math.random() * (canvas.height - 130) + 20;
+            pipes.push({ x: canvas.width, t: h, b: canvas.height - h - 80, w: 35 });
+        }
+        pipes.forEach((p, i) => {
+            p.x -= 2.2;
+            ctx.fillStyle = '#10b981';
+            ctx.fillRect(p.x, 0, p.w, p.t);
+            ctx.fillRect(p.x, canvas.height - p.b, p.w, p.b);
+            if (bird.x + bird.w > p.x && bird.x < p.x + p.w && (bird.y < p.t || bird.y + bird.h > canvas.height - p.b)) gameActive = false;
+            if (p.x + p.w < 0) { pipes.splice(i, 1); score++; }
+        });
+        if (bird.y > canvas.height || bird.y < 0) gameActive = false;
+        ctx.fillStyle = 'white'; ctx.font = '700 20px sans-serif'; ctx.fillText(score, 15, 30);
+        if (gameActive) requestAnimationFrame(gameLoop);
+    }
+
+    canvas.addEventListener('touchstart', (e) => { 
+        if (e.target.id === 'flappyCanvas') {
+            e.preventDefault();
+            if(!gameActive) { initFlappy(); gameLoop(); } else bird.v = bird.j; 
+        }
+    }, {passive: false});
+
+    async function askFlash() {
+        const promptText = document.getElementById('ai-prompt').value.trim();
+        if (!promptText) return;
+
+        const editor = document.getElementById('code-editor');
+        const loader = document.getElementById('ai-loader');
+        const btnTxt = document.getElementById('ai-btn-text');
+        
+        document.getElementById('game-arena').style.display = 'block';
+        initFlappy(); gameLoop();
+
+        editor.value = "// Architect is planning layout...";
+        btnTxt.classList.add('hidden');
+        loader.classList.remove('hidden');
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: `Generate a single-file, mobile-responsive HTML/Tailwind CSS web application for: ${promptText}. CRITICAL: Ensure the entire UI, game board, and all touch controls are visible on one screen without scrolling. Return only code.` }] }],
+                    systemInstruction: { parts: [{ text: "Master of single-screen mobile layouts. No scrolling. Return pure HTML code only. Never include markdown wrappers like ```html or ```." }] }
+                })
+            });
+            const result = await response.json();
+            let code = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            
+            // Fix: Strip markdown markers if the AI includes them despite instructions
+            code = code.replace(/```html/gi, "").replace(/```/g, "").trim();
+
+            editor.value = "";
+            let i = 0;
+            const timer = setInterval(() => {
+                const chunk = code.slice(i, i + 450);
+                editor.value += chunk;
+                i += 450;
+                editor.scrollTop = editor.scrollHeight;
+                if (i >= code.length) {
+                    clearInterval(timer);
+                    btnTxt.classList.remove('hidden');
+                    loader.classList.add('hidden');
+                    setTimeout(() => document.getElementById('game-arena').style.display = 'none', 1000);
+                }
+            }, 3);
+        } catch (e) {
+            editor.value = "Error: Invalid API Key or network failure.";
+            btnTxt.classList.remove('hidden');
+            loader.classList.add('hidden');
+        }
+    }
+
+    let installedApps = JSON.parse(localStorage.getItem('turbo_os_apps') || '[]');
+
+    function saveApps() { localStorage.setItem('turbo_os_apps', JSON.stringify(installedApps)); }
+
+    function renderGrid() {
+        const wrapper = document.getElementById('page-wrapper');
+        const dotContainer = document.getElementById('page-dots');
+        wrapper.innerHTML = '';
+        dotContainer.innerHTML = '';
+        
+        const systemApps = [
+            { name: "Architect", icon: "🚀", action: () => openWindow('creator-window'), color: 'from-blue-600 to-indigo-800' },
+            { name: "Sync Center", icon: "🔄", action: () => openWindow('sync-window'), color: 'from-emerald-600 to-teal-800' }
+        ];
+        
+        const allApps = [...systemApps, ...installedApps.map((a, i) => ({ ...a, action: () => launch(i), color: 'bg-slate-800' }))];
+        const APPS_PER_PAGE = 12;
+        const pageCount = Math.max(1, Math.ceil(allApps.length / APPS_PER_PAGE));
+        
+        for (let p = 0; p < pageCount; p++) {
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'home-page';
+            allApps.slice(p * APPS_PER_PAGE, (p + 1) * APPS_PER_PAGE).forEach(app => {
+                const div = document.createElement('div');
+                div.className = 'app-icon';
+                div.onclick = app.action;
+                const colorClass = app.color.startsWith('bg-') ? app.color : `bg-gradient-to-b ${app.color}`;
+                div.innerHTML = `<div class="icon-shape ${colorClass}">${app.icon}</div><span class="text-[10px] font-bold tracking-tight">${app.name}</span>`;
+                pageDiv.appendChild(div);
+            });
+            wrapper.appendChild(pageDiv);
+            const dot = document.createElement('div');
+            dot.className = `dot ${p === currentPage ? 'active' : ''}`;
+            dotContainer.appendChild(dot);
+        }
+        updatePagePosition();
+    }
+
+    function updatePagePosition() {
+        const wrapper = document.getElementById('page-wrapper');
+        wrapper.style.transform = `translateX(-${currentPage * 100}%)`;
+        document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === currentPage));
+    }
+
+    const container = document.getElementById('home-container');
+    container.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+    container.addEventListener('touchend', e => {
+        const diff = startX - e.changedTouches[0].clientX;
+        const pageCount = document.querySelectorAll('.home-page').length;
+        if (Math.abs(diff) > 60) {
+            if (diff > 0 && currentPage < pageCount - 1) currentPage++;
+            else if (diff < 0 && currentPage > 0) currentPage--;
+            updatePagePosition();
+        }
+    });
+
+    function generateBackup() {
+        const data = btoa(unescape(encodeURIComponent(JSON.stringify(installedApps))));
+        document.getElementById('sync-editor').value = data;
+    }
+
+    function copyToClipboard() {
+        const editor = document.getElementById('sync-editor');
+        if(!editor.value) generateBackup();
+        editor.select();
+        document.execCommand('copy');
+    }
+
+    function importApps() {
+        try {
+            const data = document.getElementById('sync-editor').value.trim();
+            const apps = JSON.parse(decodeURIComponent(escape(atob(data))));
+            if (Array.isArray(apps)) { installedApps = apps; saveApps(); renderGrid(); closeWindow('sync-window'); }
+        } catch(e) { alert("Invalid data format."); }
+    }
+
+    function installApp() {
+        const name = document.getElementById('app-name-input').value || "New App";
+        const icon = document.getElementById('app-icon-input').value || "✨";
+        const code = document.getElementById('code-editor').value;
+        if (code.length < 50) return;
+        installedApps.push({ name, icon, code });
+        saveApps(); renderGrid(); closeWindow('creator-window');
+    }
+
+    function launch(i) {
+        currentAppIndex = i;
+        const app = installedApps[i];
+        document.getElementById('runner-title').innerText = app.name;
+        document.getElementById('runner-window').style.display = 'flex';
+        document.getElementById('app-sandbox').srcdoc = app.code;
+    }
+
+    function deleteCurrentApp() {
+        if (currentAppIndex !== null) { installedApps.splice(currentAppIndex, 1); saveApps(); renderGrid(); closeWindow('runner-window'); }
+    }
+
+    function openWindow(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeWindow(id) { document.getElementById(id).style.display = 'none'; if(id==='creator-window') gameActive=false; }
+
+    renderGrid();
+</script>
+</body>
+</html>
+
